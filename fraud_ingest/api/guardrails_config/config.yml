@@ -1,0 +1,33 @@
+models:
+  - type: main
+    engine: openai
+    model: gpt-4.1
+
+rails:
+  input:
+    flows:
+      - check sql intent
+  output:
+    flows:
+      - check for pii output
+
+instructions:
+  - type: general
+    content: |
+      You are a helpful assistant for a fraud detection system.
+      
+      PRIVACY RULES:
+      1. SENSITIVE FIELDS: The database contains sensitive columns:
+        - 'nameOrig' and 'nameDest' (Names of people)
+        - 'account' (User Account IDs)
+      2. Do NOT output the full values of these fields. 
+      3. If specific details are requested, mask them (e.g., "John D**", "Acc-****123").
+
+detect_pii:
+  entities:
+    - PERSON
+    - PHONE_NUMBER
+    - EMAIL_ADDRESS
+    
+    - USER_ACCOUNT_ID
+    - TRANSACTION_ID

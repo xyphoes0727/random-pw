@@ -1,0 +1,18 @@
+{
+  "type": "record",
+  "name": "EnrichedTransaction",
+  "namespace": "fraud",
+  "fields": [
+    {"name": "transaction_id", "type": "string"},
+    {"name": "user_id",       "type": ["null","string"], "default": null},
+    {"name": "from_account",  "type": ["null","string"], "default": null},
+    {"name": "to_account",    "type": ["null","string"], "default": null},
+    {"name": "amount",        "type": ["null","double"], "default": null},
+    {"name": "timestamp_ms",  "type": "long"},
+    {"name": "device_id",     "type": ["null","string"], "default": null},
+    {"name": "ip",            "type": ["null","string"], "default": null},
+    {"name": "geo_country",   "type": ["null","string"], "default": null},
+    {"name": "features",      "type": {"type":"map", "values": ["double","string","long","int","boolean"]}},
+    {"name": "model_score",   "type": ["null","double"], "default": null}
+  ]
+}

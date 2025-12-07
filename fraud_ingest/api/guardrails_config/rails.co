@@ -1,0 +1,19 @@
+define flow check sql intent
+  user ask modify data
+  bot refuse data modification
+  stop
+
+define user ask modify data
+  "delete transaction"
+  "drop table"
+  "update amount"
+  "change name"
+
+define bot refuse data modification
+  "I cannot modify, update, or delete data. I only have read access."
+
+define flow check for pii output
+  $protected_response = execute check_pii(text=$bot_message)
+  
+  if $protected_response != $bot_message
+    bot $protected_response

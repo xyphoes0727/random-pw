@@ -1,0 +1,10 @@
+version: "3"
+
+agent:
+  authtoken: 36RTgWpJGnRoVf4OAiGWXtPiZAB_64gKX4XHgLBWX7pCHrPrW
+
+tunnels:
+  mcp:
+    proto: http
+    addr: http://ambient-agent:8124
+    pooling_enabled: true

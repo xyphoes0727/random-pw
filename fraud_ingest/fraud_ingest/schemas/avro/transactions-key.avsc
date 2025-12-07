@@ -1,0 +1,12 @@
+{
+  "type": "record",
+  "name": "TransactionKey",
+  "namespace": "fraud.transactions",
+  "fields": [
+    {
+      "name": "transactionId",
+      "type": "string",
+      "doc": "Primary key for the transaction"
+    }
+  ]
+}

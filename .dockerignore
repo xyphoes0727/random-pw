@@ -1,0 +1,66 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+fraud-venv/
+newenv/
+
+#Neo4J
+deploy/neo4j_data
+deploy/neo4j_logs
+neo4j_data/
+neo4j_logs/
+
+
+# Git
+.git
+.gitignore
+
+# Logs & caches
+logs/
+*.log
+*.tmp
+
+# Frontend garbage
+frontend/node_modules/
+frontend/.next/
+frontend/dist/
+frontend/build/
+
+# ML outputs
+mlruns/
+mlflow/
+wandb/
+models/
+*.pt
+*.pth
+*.h5
+
+# Data
+# data/
+datasets/
+# *.csv
+*.parquet
+
+# Delta lake / warehousing
+delta_lake/
+delta_lake_data/
+delta-lake/
+spark/
+warehouse/
+
+# Docker itself
+Dockerfile
+deploy/*.Dockerfile
+
+# Large json credentials
+absolute-disk-*.json
+
+# Anything else large:
+uploads/
+artifacts/
+cache/
+wandb/

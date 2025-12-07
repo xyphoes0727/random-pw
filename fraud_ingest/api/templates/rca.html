@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Transaction Analysis Report</title>
+    <style>
+        body {
+            font-family: "DejaVu Sans", Arial, sans-serif;
+            margin: 30px;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        h1 {
+            color: #183153;
+            text-align: center;
+            margin-bottom: 25px;
+            letter-spacing: 0.5px;
+            font-size: 28px;
+            border-bottom: 3px solid #e8e8e8;
+            padding-bottom: 10px;
+        }
+
+        h2 {
+            color: #244c76;
+            margin-bottom: 12px;
+            font-size: 20px;
+            border-left: 4px solid #244c76;
+            padding-left: 10px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #dcdcdc;
+            border-radius: 6px;
+            background: #fdfdfd;
+            -webkit-box-shadow: 0px 2px 4px rgba(0,0,0,0.07);
+            box-shadow: 0px 2px 4px rgba(0,0,0,0.07);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+            font-size: 14px;
+        }
+
+        table th, table td {
+            border: 1px solid #bebebe;
+            padding: 8px 12px;
+            text-align: left;
+        }
+
+        table th {
+            background: #f3f6fb;
+            font-weight: bold;
+            color: #1e3f66;
+        }
+
+        .importance-positive { background: #e6f6ea; color: #1e7d32; }
+        .importance-negative { background: #fdecea; color: #b71b1b; }
+
+        .markdown {
+            font-size: 15px;
+            padding: 10px;
+            background: #fafafa;
+            border-left: 4px solid #3a6ea5;
+        }
+
+        .image-container {
+            text-align: center;
+            margin: 25px 0;
+        }
+
+        .image-container img {
+            max-width: 95%;
+            height: auto;
+            border: 1px solid #bfbfbf;
+            padding: 8px;
+            border-radius: 4px;
+            background: #fff;
+        }
+
+        @page { margin: 30mm 20mm; }
+
+        footer {
+            position: fixed;
+            bottom: 10px;
+            width: 100%;
+            text-align: center;
+            font-size: 12px;
+            color: #888;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Fraud Detection Analysis Report</h1>
+
+    <!-- 1. RCA FIRST -->
+    <div class="section">
+        <h2>Root Cause Analysis (RCA) Summary</h2>
+        <div class="markdown">
+            {{ rca_summary | safe }}
+        </div>
+    </div>
+
+    <!-- 2. FIGURE SECOND -->
+    <div class="section">
+        <h2>Feature Importance Visualization</h2>
+        <div class="image-container">
+            <img src="{{ plot_path }}" alt="Feature Importance Graph">
+        </div>
+    </div>
+
+    <!-- 3. REST OF THE DATA (unchanged) -->
+    <div class="section">
+        <h2>Model Prediction Summary</h2>
+        <table>
+            <tr><th>Fraud Probability</th><td>{{ mlData.fraud_probability }}</td></tr>
+            <tr><th>Confidence Score</th><td>{{ mlData.confidence_score }}</td></tr>
+            <tr><th>Predicted Label</th><td>{{ mlData.model_predicted_label }}</td></tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>Transaction Details</h2>
+        <table>
+            <tr><th>Amount</th><td>{{ transactionData.amount }}</td></tr>
+            <tr><th>Old Balance (Origin)</th><td>{{ transactionData.oldbalanceOrg }}</td></tr>
+            <tr><th>New Balance (Origin)</th><td>{{ transactionData.newbalanceOrig }}</td></tr>
+            <tr><th>Old Balance (Destination)</th><td>{{ transactionData.oldbalanceDest }}</td></tr>
+            <tr><th>New Balance (Destination)</th><td>{{ transactionData.newbalanceDest }}</td></tr>
+            <tr><th>Origin Sent More</th><td>{{ transactionData.origMoreSent }}</td></tr>
+            <tr><th>Origin Sent Flag</th><td>{{ transactionData.origMoreSentFlag }}</td></tr>
+            <tr><th>Destination Received More</th><td>{{ transactionData.destMoreRec }}</td></tr>
+            <tr><th>Destination Received Flag</th><td>{{ transactionData.destMoreRecFlag }}</td></tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>Feature Importances</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Feature</th>
+                    <th>SHAP Importance</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for feature, value in returnedDict.feature_importances.items() %}
+                <tr class="{{ 'importance-positive' if value > 0 else 'importance-negative' }}">
+                    <td>{{ feature }}</td>
+                    <td>{{ value }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <footer>
+        Fraud Analysis Report — Generated using AI
+    </footer>
+
+</body>
+</html>

@@ -1,0 +1,64 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pdb
+*.db
+*.sqlite3
+*.csv
+
+#Frontend
+node_modules/
+
+.env
+# Virtual env
+newenv/
+venv/
+env/
+.venv/
+vnclean/
+integration/
+fraud-venv/
+
+# Django
+*.log
+*.pot
+*.pyc
+*.mo
+staticfiles/
+media/
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+
+# Docker
+postgres_data/
+static_volume/
+*.pid
+
+# OS junk
+.DS_Store
+Thumbs.db
+.sync_state.json
+
+# neo4j_data
+neo4j_data/
+neo4j_logs/
+
+# ML
+ml_registry/
+shap_artifacts/
+rca_reports/
+logs/
+wandb/
+artifacts/
+.log.zip
+/neo4j_plugins
+
+
+*.json
+*.zip
+*.jar

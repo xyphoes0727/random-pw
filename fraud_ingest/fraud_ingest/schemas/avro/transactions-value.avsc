@@ -1,0 +1,57 @@
+{
+  "type": "record",
+  "name": "Transaction",
+  "namespace": "fraud.transactions",
+  "fields": [
+    {
+      "name": "transactionId",
+      "type": "string",
+      "doc": "Unique transaction identifier (primary key)"
+    },
+    {
+      "name": "step",
+      "type": "int",
+      "doc": "Equivalent to timestamp"
+    },
+    {
+      "name": "type",
+      "type": "string",
+      "doc": "Payment method type"
+    },
+    {
+      "name": "nameOrig",
+      "type": "string",
+      "doc": "From account identifier"
+    },
+    {
+      "name": "oldbalanceOrg",
+      "type": "double",
+      "doc": "Balance of sender account before transaction"
+    },
+    {
+      "name": "newbalanceOrig",
+      "type": "double",
+      "doc": "Balance of sender account after transaction"
+    },
+    {
+      "name": "nameDest",
+      "type": "string",
+      "doc": "To account identifier"
+    },
+    {
+      "name": "oldbalanceDest",
+      "type": "double",
+      "doc": "Balance of receiver account before transaction"
+    },
+    {
+      "name": "newbalanceDest",
+      "type": "double",
+      "doc": "Balance of receiver account after transaction"
+    },
+    {
+      "name": "isFraud",
+      "type": "int",
+      "doc": "Signifying fraud transaction"
+    }
+  ]
+}

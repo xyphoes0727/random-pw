@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>WebSocket Consumer Test + Chat API</title>
+  <style>
+    body {
+      font-family: monospace;
+      background: #0d1117;
+      color: #c9d1d9;
+      padding: 20px;
+    }
+    h2 {
+      color: #58a6ff;
+    }
+    button {
+      background: #21262d;
+      color: #c9d1d9;
+      border: 1px solid #30363d;
+      padding: 5px 10px;
+      margin-right: 10px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    button:hover {
+      background: #30363d;
+    }
+    button:disabled {
+      background: #161b22;
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+    pre {
+      background: #161b22;
+      border: 1px solid #30363d;
+      padding: 10px;
+      border-radius: 6px;
+      max-height: 300px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    .chatbot-section {
+      margin-top: 30px;
+      border-top: 2px solid #30363d;
+      padding-top: 20px;
+    }
+    #chatMessages {
+      background: #161b22;
+      border: 1px solid #30363d;
+      padding: 15px;
+      border-radius: 6px;
+      max-height: 400px;
+      overflow-y: auto;
+      margin-bottom: 15px;
+    }
+    .message {
+      margin-bottom: 15px;
+      padding: 10px;
+      border-radius: 6px;
+    }
+    .message.user {
+      background: #1f6feb;
+      margin-left: 20%;
+    }
+    .message.assistant {
+      background: #21262d;
+      margin-right: 20%;
+      border: 1px solid #30363d;
+    }
+    .message.error {
+      background: #da3633;
+      margin-right: 20%;
+    }
+    .message-content {
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      line-height: 1.6;
+    }
+    /* Markdown styling */
+    .message-content h1, .message-content h2, .message-content h3 {
+      color: #58a6ff;
+      margin-top: 10px;
+      margin-bottom: 5px;
+    }
+    .message-content code {
+      background: #161b22;
+      padding: 2px 6px;
+      border-radius: 3px;
+      color: #79c0ff;
+      font-family: 'Courier New', monospace;
+    }
+    .message-content pre {
+      background: #0d1117;
+      padding: 10px;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin: 10px 0;
+    }
+    .message-content pre code {
+      background: transparent;
+      padding: 0;
+    }
+    .message-content ul, .message-content ol {
+      margin: 10px 0;
+      padding-left: 20px;
+    }
+    .message-content strong {
+      color: #58a6ff;
+      font-weight: bold;
+    }
+    .message-content em {
+      color: #8b949e;
+      font-style: italic;
+    }
+    .message-content blockquote {
+      border-left: 3px solid #30363d;
+      padding-left: 10px;
+      margin: 10px 0;
+      color: #8b949e;
+    }
+    .message-content a {
+      color: #58a6ff;
+      text-decoration: none;
+    }
+    .message-content a:hover {
+      text-decoration: underline;
+    }
+    .streaming-cursor {
+      display: inline-block;
+      width: 8px;
+      height: 14px;
+      background: #58a6ff;
+      margin-left: 2px;
+      animation: blink 1s infinite;
+    }
+    @keyframes blink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0; }
+    }
+    .chart-container {
+      background: #21262d;
+      border: 1px solid #30363d;
+      padding: 15px;
+      border-radius: 6px;
+      margin-top: 10px;
+    }
+    .chart-title {
+      color: #58a6ff;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    .chart-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 5px 0;
+      border-bottom: 1px solid #30363d;
+    }
+    .chart-label {
+      color: #8b949e;
+    }
+    .chart-value {
+      color: #58a6ff;
+      font-weight: bold;
+    }
+    #chatInput {
+      width: calc(100% - 220px);
+      background: #161b22;
+      border: 1px solid #30363d;
+      color: #c9d1d9;
+      padding: 10px;
+      border-radius: 4px;
+      font-family: monospace;
+      resize: vertical;
+      min-height: 60px;
+    }
+    #chatInput:focus {
+      outline: none;
+      border-color: #58a6ff;
+    }
+    .input-container {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    #sendBtn {
+      height: 60px;
+      padding: 0 20px;
+    }
+    #clearBtn {
+      height: 60px;
+      padding: 0 15px;
+      background: #8b1e3f;
+    }
+    #clearBtn:hover {
+      background: #a02346;
+    }
+    .sql-details {
+      margin-top: 10px;
+      font-size: 11px;
+    }
+    .sql-code {
+      background: #0d1117;
+      padding: 8px;
+      border-radius: 4px;
+      margin-top: 5px;
+      color: #79c0ff;
+    }
+    .conversation-info {
+      font-size: 10px;
+      color: #8b949e;
+      margin-bottom: 10px;
+      padding: 5px;
+      background: #0d1117;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <h2>MetricConsumer Test</h2>
+  <div>
+    <button id="connectMetric">Connect Metric WS</button>
+    <button id="subscribeMetric">Subscribe</button>
+    <button id="unsubscribeMetric">Unsubscribe</button>
+    <button id="fetchStaticMetric">Fetch Static</button>
+  </div>
+  <pre id="metricOutput">Waiting...</pre>
+
+  <h2>LogsConsumer Test</h2>
+  <div>
+    <button id="connectLogs">Connect Logs WS</button>
+    <button id="fetchStaticLogs">Fetch Static</button>
+    <button id="streamRealtimeLogs">Stream Realtime</button>
+    <button id="stopStream">Stop Stream</button>
+  </div>
+  <pre id="logsOutput">Waiting...</pre>
+
+  <h2>TracesConsumer Test</h2>
+  <div>
+    <button id="connectTraces">Connect Traces WS</button>
+    <button id="fetchStaticTraces">Fetch Static Traces</button>
+    <button id="fetchErrors">Fetch Error Traces</button>
+    <button id="fetchSlowTraces">Fetch Slow Traces</button>
+    <button id="closeTraces">Close Connection</button>
+  </div>
+  <pre id="tracesOutput">Waiting...</pre>
+
+  <h2>AmbientAgentLogs Test</h2>
+  <div>
+    <button id="connectAmbient">Connect Ambient WS</button>
+    <button id="subscribeAmbient">Subscribe (Start Streaming)</button>
+    <button id="fetchStaticAmbient">Fetch Static Logs</button>
+    <button id="stopAmbientStream">Stop Stream</button>
+  </div>
+  <pre id="ambientOutput">Waiting...</pre>
+
+  <h2>KafkaMLConsumer Test</h2>
+  <div>
+    <button id="connectKafka">Connect Kafka WS</button>
+    <button id="startKafkaStream">Start Stream</button>
+    <button id="stopKafkaStream">Stop Stream</button>
+  </div>
+  <pre id="kafkaOutput">Waiting...</pre>
+
+  <!-- CHATBOT SECTION -->
+  <div class="chatbot-section">
+    <h2>🤖 Fraud Detection Chatbot (SSE + Context + Markdown)</h2>
+    <div class="conversation-info" id="conversationInfo">
+      New conversation - Context will be maintained
+    </div>
+    <div id="chatMessages">
+      <div style="text-align: center; color: #8b949e; padding: 20px;">
+        Welcome! Ask questions about transactions or request charts.<br>
+        <small>I'll remember our conversation context.</small>
+      </div>
+    </div>
+    <div class="input-container">
+      <textarea 
+        id="chatInput" 
+        placeholder="Ask about transactions, fraud patterns, or request a chart...&#10;Example: 'Show me last 10 transactions' then 'Summarize them'"
+      ></textarea>
+      <button id="sendBtn">Send</button>
+      <button id="clearBtn" title="Clear conversation history">Clear</button>
+    </div>
+  </div>
+
+  <!-- Include Marked.js for Markdown rendering -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <script>
+    let metricWS = null;
+    let logsWS = null;
+    let tracesWS = null;
+    let kafkaWS = null;
+
+    const metricOutput = document.getElementById("metricOutput");
+    const logsOutput = document.getElementById("logsOutput");
+    const tracesOutput = document.getElementById("tracesOutput");
+    const kafkaOutput = document.getElementById("kafkaOutput");
+
+    // ===== METRIC CONSUMER =====
+    document.getElementById("connectMetric").onclick = () => {
+      metricWS = new WebSocket("ws://localhost:8000/ws/metrics/");
+      metricWS.onopen = () => metricOutput.textContent = "Connected to MetricConsumer";
+      metricWS.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        metricOutput.textContent = JSON.stringify(data, null, 2);
+      };
+      metricWS.onclose = () => metricOutput.textContent = "Metric WebSocket closed";
+    };
+
+    document.getElementById("subscribeMetric").onclick = () => {
+      if (!metricWS) return alert("Connect Metric WS first!");
+      metricWS.send(JSON.stringify({
+        action: "subscribe",
+        service_name: "fraud-ingest-api",
+        metric: "asyncio_process_created_total"
+      }));
+    };
+
+    document.getElementById("unsubscribeMetric").onclick = () => {
+      if (!metricWS) return alert("Connect Metric WS first!");
+      metricWS.send(JSON.stringify({
+        action: "unsubscribe",
+        metric: "asyncio_process_created_total"
+      }));
+    };
+
+    document.getElementById("fetchStaticMetric").onclick = () => {
+      if (!metricWS) return alert("Connect Metric WS first!");
+      const now = Math.floor(Date.now() / 1000);
+      const start = now - 2*24*3600; 
+      metricWS.send(JSON.stringify({
+        action: "fetch_static",
+        service_name: "fraud-ingest-api",
+        metric: "asyncio_process_created_total",
+        start: start,
+        end: now
+      }));
+    }; 
+
+    // ===== LOGS CONSUMER =====
+    document.getElementById("connectLogs").onclick = () => {
+      logsWS = new WebSocket("ws://localhost:8000/ws/logs/");
+      logsWS.onopen = () => logsOutput.textContent = "Connected to LogsConsumer";
+      logsWS.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        logsOutput.textContent = JSON.stringify(data, null, 2);
+      };
+      logsWS.onclose = () => logsOutput.textContent = "Logs WebSocket closed";
+    };
+
+    document.getElementById("fetchStaticLogs").onclick = () => {
+      const nowSec = Math.floor(Date.now() / 1000);
+      const startSec = nowSec - 2 * 24 * 3600;
+      const nowNs = nowSec * 1_000_000_000;
+      const startNs = startSec * 1_000_000_000;
+
+      logsWS.send(JSON.stringify({
+        service_name: "fraud_detection_frontend",
+        start: startNs,
+        end: nowNs
+      }));
+    };
+
+    document.getElementById("streamRealtimeLogs").onclick = () => {
+      if (!logsWS) return alert("Connect Logs WS first!");
+      logsWS.send(JSON.stringify({
+        service_name: "fraud_detection_frontend"
+      }));
+    };
+
+    document.getElementById("stopStream").onclick = () => {
+      if (logsWS) logsWS.close();
+      logsOutput.textContent = "Stopped realtime log stream (Connection Closed).";
+    };
+
+    // ===== TRACES CONSUMER =====
+    document.getElementById("connectTraces").onclick = () => {
+      tracesWS = new WebSocket("ws://localhost:8000/ws/traces/");
+      tracesWS.onopen = () => tracesOutput.textContent = "Connected to TracesConsumer";
+      tracesWS.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        tracesOutput.textContent = JSON.stringify(data, null, 2);
+      };
+      tracesWS.onclose = () => tracesOutput.textContent = "Traces WebSocket closed";
+    };
+
+    document.getElementById("fetchStaticTraces").onclick = () => {
+      if (!tracesWS) return alert("Connect Traces WS first!");
+      const now = Math.floor(Date.now() / 1000);
+      const start = now - 24*3600; 
+      tracesWS.send(JSON.stringify({
+        service_name: "pathway-backend",
+        start: start,
+        end: now,
+        limit: 20
+      }));
+    };
+
+    document.getElementById("fetchErrors").onclick = () => {
+      if (!tracesWS) return alert("Connect Traces WS first!");
+      const now = Math.floor(Date.now() / 1000);
+      const start = now - 24*3600;
+      tracesWS.send(JSON.stringify({
+        service_name: "pathway-backend",
+        start: start,
+        end: now,
+        status: "error",
+        limit: 20
+      }));
+    };
+
+    document.getElementById("fetchSlowTraces").onclick = () => {
+      if (!tracesWS) return alert("Connect Traces WS first!");
+      const now = Math.floor(Date.now() / 1000);
+      const start = now - 24*3600;
+      tracesWS.send(JSON.stringify({
+        service_name: "pathway-backend",
+        start: start,
+        end: now, 
+        min_duration: 1000,
+        limit: 20
+      }));
+    };
+
+    document.getElementById("closeTraces").onclick = () => {
+      if (tracesWS) tracesWS.close();
+      tracesOutput.textContent = "Traces WebSocket closed manually.";
+    };
+
+    // ===== KAFKA ML CONSUMER =====
+    document.getElementById("connectKafka").onclick = () => {
+      kafkaWS = new WebSocket("ws://localhost:8000/ws/kafka/");
+      kafkaWS.onopen = () => kafkaOutput.textContent = "Connected to KafkaMLConsumer";
+      kafkaWS.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        kafkaOutput.textContent = JSON.stringify(data, null, 2);
+      };
+      kafkaWS.onclose = () => kafkaOutput.textContent = "KafkaML WebSocket closed";
+    };
+
+    document.getElementById("startKafkaStream").onclick = () => {
+      if (kafkaWS) {
+        kafkaWS.send(JSON.stringify({
+          action: "start_stream"
+        }));
+        kafkaOutput.textContent = "Sent start_stream command.";
+      } else {
+        alert("Connect Kafka WS first!");
+      }
+    };
+
+    document.getElementById("stopKafkaStream").onclick = () => {
+      if (kafkaWS) {
+        kafkaWS.send(JSON.stringify({
+          action: "stop_stream"
+        }));
+        kafkaOutput.textContent = "Sent stop_stream command.";
+      } else {
+        alert("Connect Kafka WS first!");
+      }
+    };
+
+    // ===== AMBIENT LOGS =====
+    let ambientWS = null;
+    const ambientOutput = document.getElementById("ambientOutput");
+
+    document.getElementById("connectAmbient").onclick = () => {
+      ambientWS = new WebSocket("ws://localhost:8000/telemetry/ws/ambientlogs/");
+      ambientWS.onopen = () => ambientOutput.textContent = "Connected to AmbientAgentLogs";
+      ambientWS.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        ambientOutput.textContent = JSON.stringify(data, null, 2);
+      };
+      ambientWS.onclose = () => ambientOutput.textContent = "Ambient WebSocket closed";
+    };
+
+    document.getElementById("subscribeAmbient").onclick = () => {
+      if (!ambientWS) return alert("Connect first!");
+      ambientWS.send(JSON.stringify({
+        service_name: "pathway"
+      }));
+    };
+
+    document.getElementById("stopAmbientStream").onclick = () => {
+      if (ambientWS) ambientWS.close();
+      ambientOutput.textContent = "Stopped Ambient log stream.";
+    };
+
+    // ===== CHATBOT WITH SSE, CONTEXT, AND MARKDOWN =====
+    const chatMessages = document.getElementById('chatMessages');
+    const chatInput = document.getElementById('chatInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const conversationInfo = document.getElementById('conversationInfo');
+    
+    let isLoading = false;
+    let currentConversationId = null;
+
+    function scrollToBottom() {
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function updateConversationInfo() {
+      if (currentConversationId) {
+        conversationInfo.textContent = `Conversation ID: ${currentConversationId.substring(0, 8)}... (Context maintained)`;
+      } else {
+        conversationInfo.textContent = 'New conversation - Context will be maintained';
+      }
+    }
+
+    function addMessage(role, content, isStreaming = false, isError = false) {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message ${role}`;
+      if (isError) messageDiv.className += ' error';
+      
+      const contentDiv = document.createElement('div');
+      contentDiv.className = 'message-content';
+      
+      if (role === 'assistant' && !isError) {
+        // Render markdown using marked.js
+        contentDiv.innerHTML = marked.parse(content || '');
+      } else {
+        contentDiv.textContent = content;
+      }
+      
+      if (isStreaming) {
+        const cursor = document.createElement('span');
+        cursor.className = 'streaming-cursor';
+        contentDiv.appendChild(cursor);
+      }
+      
+      messageDiv.appendChild(contentDiv);
+      chatMessages.appendChild(messageDiv);
+      scrollToBottom();
+      return messageDiv;
+    }
+
+    function updateMessage(messageDiv, content, isStreaming = true) {
+      const contentDiv = messageDiv.querySelector('.message-content');
+      
+      if (messageDiv.classList.contains('assistant') && !messageDiv.classList.contains('error')) {
+        // Render markdown for assistant messages
+        contentDiv.innerHTML = marked.parse(content || '');
+      } else {
+        contentDiv.textContent = content;
+      }
+      
+      if (isStreaming) {
+        const cursor = document.createElement('span');
+        cursor.className = 'streaming-cursor';
+        contentDiv.appendChild(cursor);
+      }
+      scrollToBottom();
+    }
+
+    function renderChart(messageDiv, plotData) {
+      const result = plotData.result || plotData;
+      const chart = result.chart;
+      
+      if (!chart) {
+        updateMessage(messageDiv, 'Error: No chart data available', false);
+        return;
+      }
+
+      const chartType = result.chart_type || plotData.chart_type || 'bar';
+      
+      const chartContainer = document.createElement('div');
+      chartContainer.className = 'chart-container';
+      
+      const title = document.createElement('div');
+      title.className = 'chart-title';
+      title.textContent = `📊 ${chartType.toUpperCase()} CHART`;
+      chartContainer.appendChild(title);
+
+      if (chartType === 'scatter') {
+        const points = chart.points || [];
+        const pointsInfo = document.createElement('div');
+        pointsInfo.style.marginBottom = '10px';
+        pointsInfo.textContent = `Scatter plot with ${points.length} points`;
+        chartContainer.appendChild(pointsInfo);
+
+        if (chart.datasets && chart.datasets[0]) {
+          const datasetTitle = document.createElement('div');
+          datasetTitle.style.color = '#8b949e';
+          datasetTitle.style.marginBottom = '10px';
+          datasetTitle.textContent = chart.datasets[0].label;
+          chartContainer.appendChild(datasetTitle);
+        }
+
+        points.slice(0, 10).forEach((point, idx) => {
+          const row = document.createElement('div');
+          row.className = 'chart-row';
+          row.innerHTML = `
+            <span class="chart-label">Point ${idx + 1}:</span>
+            <span class="chart-value">(${point.x?.toFixed(2)}, ${point.y?.toFixed(2)})</span>
+          `;
+          chartContainer.appendChild(row);
+        });
+
+        if (points.length > 10) {
+          const more = document.createElement('div');
+          more.style.color = '#8b949e';
+          more.style.textAlign = 'center';
+          more.style.marginTop = '10px';
+          more.textContent = `... and ${points.length - 10} more points`;
+          chartContainer.appendChild(more);
+        }
+      } else {
+        if (chart.datasets) {
+          chart.datasets.forEach(dataset => {
+            const datasetTitle = document.createElement('div');
+            datasetTitle.style.color = '#8b949e';
+            datasetTitle.style.marginTop = '10px';
+            datasetTitle.style.marginBottom = '5px';
+            datasetTitle.textContent = dataset.label || 'Data';
+            chartContainer.appendChild(datasetTitle);
+
+            chart.labels?.forEach((label, i) => {
+              const row = document.createElement('div');
+              row.className = 'chart-row';
+              row.innerHTML = `
+                <span class="chart-label">${label}</span>
+                <span class="chart-value">${dataset.data?.[i]?.toFixed(2) || 0}</span>
+              `;
+              chartContainer.appendChild(row);
+            });
+          });
+        }
+      }
+
+      if (result.meta?.sql) {
+        const sqlDetails = document.createElement('details');
+        sqlDetails.className = 'sql-details';
+        
+        const summary = document.createElement('summary');
+        summary.textContent = '🔍 View SQL Query';
+        summary.style.cursor = 'pointer';
+        summary.style.color = '#8b949e';
+        sqlDetails.appendChild(summary);
+        
+        const sqlCode = document.createElement('pre');
+        sqlCode.className = 'sql-code';
+        sqlCode.textContent = result.meta.sql;
+        sqlDetails.appendChild(sqlCode);
+        
+        chartContainer.appendChild(sqlDetails);
+      }
+
+      messageDiv.innerHTML = '';
+      messageDiv.appendChild(chartContainer);
+      scrollToBottom();
+    }
+
+    async function sendMessage() {
+      const text = chatInput.value.trim();
+      if (!text || isLoading) return;
+
+      addMessage('user', text);
+      chatInput.value = '';
+      isLoading = true;
+      sendBtn.disabled = true;
+      sendBtn.textContent = 'Sending...';
+
+      const assistantMsg = addMessage('assistant', '', true);
+
+      try {
+        const response = await fetch('http://localhost:8000/api/chat/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            text: text,
+            conversation_id: currentConversationId  // Send conversation ID
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        console.log("Resposne:",response)
+        const reader = response.body.getReader();
+        console.log("reader:",reader)
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let accumulatedText = ''; 
+
+        while (true) {
+          const { done, value } = await reader.read();
+          
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          
+          const lines = buffer.split('\n\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+              console.log("Data:",data)
+              try {
+                const parsed = JSON.parse(data);
+                
+                // Handle conversation ID
+                if (parsed.conversation_id) {
+                  currentConversationId = parsed.conversation_id;
+                  updateConversationInfo();
+                }
+                // Handle plot response
+                else if (parsed.mode === 'plot' || parsed.chart_type || (parsed.result && parsed.result.chart)) {
+                  if (parsed.error) {
+                    updateMessage(assistantMsg, `Error: ${parsed.error}`, false);
+                  } else {
+                    renderChart(assistantMsg, parsed);
+                  }
+                }
+                // Handle streaming text
+                else if (parsed.text) {
+                  accumulatedText += parsed.text;
+                  updateMessage(assistantMsg, accumulatedText, true);
+                }
+                // Handle completion
+                else if (parsed.done) {
+                  updateMessage(assistantMsg, accumulatedText, false);
+                }
+                // Handle errors
+                else if (parsed.error) {
+                  assistantMsg.classList.add('error');
+                  updateMessage(assistantMsg, `Error: ${parsed.error}`, false);
+                }
+              } catch (e) {
+                console.error('Error parsing SSE data:', e, data);
+              }
+            }
+          }
+        }
+
+        if (accumulatedText) {
+          updateMessage(assistantMsg, accumulatedText, false);
+        }
+
+      } catch (error) {
+        console.error('Error sending message:', error);
+        assistantMsg.classList.add('error');
+        updateMessage(assistantMsg, `Error: ${error.message}`, false);
+      } finally {
+        isLoading = false;
+        sendBtn.disabled = false;
+        sendBtn.textContent = 'Send';
+      }
+    }
+
+    // Clear conversation
+    clearBtn.onclick = async () => {
+      if (!currentConversationId) {
+        chatMessages.innerHTML = '<div style="text-align: center; color: #8b949e; padding: 20px;">Welcome! Ask questions about transactions or request charts.<br><small>I\'ll remember our conversation context.</small></div>';
+        return;
+      }
+
+      if (!confirm('Clear conversation history? This will reset the context.')) {
+        return;
+      }
+
+      try {
+        await fetch(`http://localhost:8000/api/conversation/${currentConversationId}/`, {
+          method: 'DELETE',
+        });
+        
+        currentConversationId = null;
+        updateConversationInfo();
+        chatMessages.innerHTML = '<div style="text-align: center; color: #8b949e; padding: 20px;">Conversation cleared! Start a new one.<br><small>I\'ll remember our conversation context.</small></div>';
+      } catch (error) {
+        console.error('Error clearing conversation:', error);
+        alert('Failed to clear conversation');
+      }
+    };
+
+    sendBtn.onclick = sendMessage;
+    
+    chatInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    chatInput.addEventListener('focus', () => {
+      if (chatMessages.children.length === 1 && !currentConversationId) {
+        chatMessages.innerHTML = '';
+      }
+    }, { once: true });
+  </script>
+</body>
+</html>
